@@ -64,7 +64,7 @@ func DBConnect(sess *session.Session, credSecret string, table string) (*sqlx.DB
 		mylog.Error.Fatal(err)
 	}
 
-  AuroraConnection := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+	AuroraConnection := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 		dbCreds.Username,
 		dbCreds.Password,
 		dbCreds.Host,
