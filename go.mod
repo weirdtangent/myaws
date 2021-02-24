@@ -1,4 +1,4 @@
-module github.com/weirdtanget/myaws
+module github.com/weirdtangent/myaws
 
 go 1.13
 
