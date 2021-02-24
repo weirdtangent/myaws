@@ -1,17 +1,18 @@
 package myaws
 
 import (
+	"encoding/base64"
 	"encoding/json"
-  "encoding/base64"
 	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-  "github.com/rs/zerolog/log"
+	"github.com/rs/zerolog/log"
 )
 
 // format of SecretString for RDS connection
@@ -75,7 +76,7 @@ func AWSGetSecretValue(sess *session.Session, secret string) (*string, error) {
 		log.Fatal().Err(err)
 	}
 
-  var decodedBinarySecret string
+	var decodedBinarySecret string
 	if result.SecretString != nil {
 		return result.SecretString, nil
 	} else {
@@ -93,8 +94,6 @@ func AWSGetSecretValue(sess *session.Session, secret string) (*string, error) {
 
 // SecretString: \"{\\n  \\\"stockwatch-305602\\\": \\\"{\\n  \\\"type\\\": \\\"service_account\\\",\\n  \\
 
-
-
 // try to connect to RDS after getting key value from secret
 func DBConnect(sess *session.Session, credSecret string, table string) (*sqlx.DB, error) {
 	dbCreds, err := awsGetDBCredentials(sess, credSecret)
@@ -110,6 +109,11 @@ func DBConnect(sess *session.Session, credSecret string, table string) (*sqlx.DB
 		table)
 
 	return sqlx.Open("mysql", AuroraConnection)
+}
+
+// try to connect to DDB
+func DDBConnect(sess *session.Session) (*dynamodb.DynamoDB, error) {
+	return dynamodb.New(sess), nil
 }
 
 // INTERNAL
