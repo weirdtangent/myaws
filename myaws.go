@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go/service/sts"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
@@ -32,6 +33,17 @@ func AWSConnect(r string, proj string) (*session.Session, error) {
 		Config:  aws.Config{Region: aws.String(r)},
 		Profile: proj,
 	})
+}
+
+func AWSAccount(awssess *session.Session) (*string, error) {
+	svc := sts.New(session.New())
+	input := &sts.GetCallerIdentityInput{}
+
+	result, err := svc.GetCallerIdentity(input)
+	if err != nil {
+		return nil, err
+	}
+	return result.Account, nil
 }
 
 // try to get value of key from aws secret
