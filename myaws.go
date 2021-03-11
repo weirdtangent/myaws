@@ -49,9 +49,9 @@ func AWSAccount(awssess *session.Session) (*string, *string, error) {
 }
 
 // try to get value of key from aws secret
-func AWSGetSecretKV(sess *session.Session, secret string, key string) (*string, error) {
+func AWSGetSecretKV(awssess *session.Session, secret string, key string) (*string, error) {
 	// get service into secrets manager
-	svc := secretsmanager.New(sess)
+	svc := secretsmanager.New(awssess)
 
 	// go get the secret we need
 	input := &secretsmanager.GetSecretValueInput{
@@ -76,9 +76,9 @@ func AWSGetSecretKV(sess *session.Session, secret string, key string) (*string, 
 	return nil, errors.New(fmt.Sprintf("Key %s not found in secret %s", key, secret))
 }
 
-func AWSGetSecretValue(sess *session.Session, secret string) (*string, error) {
+func AWSGetSecretValue(awssess *session.Session, secret string) (*string, error) {
 	// get service into secrets manager
-	svc := secretsmanager.New(sess)
+	svc := secretsmanager.New(awssess)
 
 	// go get the secret we need
 	input := &secretsmanager.GetSecretValueInput{
@@ -109,8 +109,8 @@ func AWSGetSecretValue(sess *session.Session, secret string) (*string, error) {
 // SecretString: \"{\\n  \\\"stockwatch-305602\\\": \\\"{\\n  \\\"type\\\": \\\"service_account\\\",\\n  \\
 
 // try to connect to RDS after getting key value from secret
-func DBConnect(sess *session.Session, credSecret string, table string) (*sqlx.DB, error) {
-	dbCreds, err := awsGetDBCredentials(sess, credSecret)
+func DBConnect(awssess *session.Session, credSecret string, table string) (*sqlx.DB, error) {
+	dbCreds, err := awsGetDBCredentials(awssess, credSecret)
 	if err != nil {
 		log.Fatal().Err(err)
 	}
@@ -126,15 +126,15 @@ func DBConnect(sess *session.Session, credSecret string, table string) (*sqlx.DB
 }
 
 // try to connect to DDB
-func DDBConnect(sess *session.Session) (*dynamodb.DynamoDB, error) {
-	return dynamodb.New(sess), nil
+func DDBConnect(awssess *session.Session) (*dynamodb.DynamoDB, error) {
+	return dynamodb.New(awssess), nil
 }
 
 // INTERNAL
 
-func awsGetDBCredentials(sess *session.Session, key string) (*dbCredentials, error) {
+func awsGetDBCredentials(awssess *session.Session, key string) (*dbCredentials, error) {
 	// get service into secrets manager
-	svc := secretsmanager.New(sess)
+	svc := secretsmanager.New(awssess)
 
 	// go get the secret we need
 	input := &secretsmanager.GetSecretValueInput{
