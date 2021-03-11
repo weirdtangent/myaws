@@ -35,15 +35,17 @@ func AWSConnect(r string, proj string) (*session.Session, error) {
 	})
 }
 
-func AWSAccount(awssess *session.Session) (*string, error) {
+func AWSAccount(awssess *session.Session) (*string, *string, error) {
 	svc := sts.New(session.New())
 	input := &sts.GetCallerIdentityInput{}
 
+	region := "us-east-1"
+
 	result, err := svc.GetCallerIdentity(input)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return result.Account, nil
+	return &region, result.Account, nil
 }
 
 // try to get value of key from aws secret
