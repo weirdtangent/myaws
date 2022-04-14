@@ -99,7 +99,19 @@ func AWSGetSecretValue(awssess *session.Session, secret string) (*string, error)
 }
 
 // try to connect to RDS after getting key value from secret
-func DBConnect(awssess *session.Session, credSecret string, database string) *sqlx.DB {
+func DBConnect(awssess *session.Session, credSecret string, database string) (*sqlx.DB, error) {
+	rdbsConnection, err := AWSGetSecretKV(awssess, credSecret, "rdbs_connection")
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
+	connection := fmt.Sprintf("%s/%s", rdbsConnection, database)
+
+	return sqlx.Open("mysql", connection)
+}
+
+// must connect to RDS after getting key value from secret
+func DBMustConnect(awssess *session.Session, credSecret string, database string) *sqlx.DB {
 	rdbsConnection, err := AWSGetSecretKV(awssess, credSecret, "rdbs_connection")
 	if err != nil {
 		log.Fatal().Err(err)
