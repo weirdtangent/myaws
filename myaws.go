@@ -105,11 +105,9 @@ func DBConnect(awssess *session.Session, credSecret string, database string) (*s
 		log.Fatal().Err(err)
 	}
 
-	Connection := fmt.Sprintf("%s/%s?parseTime=true",
-		rdbsConnection,
-		database)
+	connection := fmt.Sprintf("%s/%s?parseTime=true", rdbsConnection, database)
 
-	return sqlx.Open("mysql", Connection)
+	return sqlx.Open("mysql", connection)
 }
 
 // try to connect to DDB
