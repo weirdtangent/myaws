@@ -16,14 +16,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// format of SecretString for RDS connection
-type dbCredentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Host     string `json:"host"`
-	Port     int    `json:port`
-}
-
 func AWSConfig(r string) (*aws.Config, error) {
 	return &aws.Config{Region: aws.String(r)}, nil
 }
@@ -106,52 +98,21 @@ func AWSGetSecretValue(awssess *session.Session, secret string) (*string, error)
 	return &decodedBinarySecret, nil
 }
 
-// SecretString: \"{\\n  \\\"stockwatch-305602\\\": \\\"{\\n  \\\"type\\\": \\\"service_account\\\",\\n  \\
-
 // try to connect to RDS after getting key value from secret
-func DBConnect(awssess *session.Session, credSecret string, table string) (*sqlx.DB, error) {
-	dbCreds, err := awsGetDBCredentials(awssess, credSecret)
+func DBConnect(awssess *session.Session, credSecret string, database string) (*sqlx.DB, error) {
+	rdbsConnection, err := AWSGetSecretKV(awssess, credSecret, "rdbs_connection")
 	if err != nil {
 		log.Fatal().Err(err)
 	}
 
-	AuroraConnection := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-		dbCreds.Username,
-		dbCreds.Password,
-		dbCreds.Host,
-		dbCreds.Port,
-		table)
+	Connection := fmt.Sprintf("%s/%s?parseTime=true",
+		rdbsConnection,
+		database)
 
-	return sqlx.Open("mysql", AuroraConnection)
+	return sqlx.Open("mysql", Connection)
 }
 
 // try to connect to DDB
 func DDBConnect(awssess *session.Session) (*dynamodb.DynamoDB, error) {
 	return dynamodb.New(awssess), nil
-}
-
-// INTERNAL
-
-func awsGetDBCredentials(awssess *session.Session, key string) (*dbCredentials, error) {
-	// get service into secrets manager
-	svc := secretsmanager.New(awssess)
-
-	// go get the secret we need
-	input := &secretsmanager.GetSecretValueInput{
-		SecretId: aws.String(key),
-	}
-
-	result, err := svc.GetSecretValue(input)
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-
-	// unmarshal json
-	var dbCreds dbCredentials
-	err = json.Unmarshal([]byte(*result.SecretString), &dbCreds)
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-
-	return &dbCreds, nil
 }
