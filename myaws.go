@@ -105,7 +105,7 @@ func DBConnect(awssess *session.Session, credSecret string, database string) (*s
 		log.Fatal().Err(err)
 	}
 
-	connection := fmt.Sprintf("%s/%s", rdbsConnection, database)
+	connection := fmt.Sprintf("%s/%s", *rdbsConnection, database)
 
 	return sqlx.Open("mysql", connection)
 }
@@ -117,7 +117,7 @@ func DBMustConnect(awssess *session.Session, credSecret string, database string)
 		log.Fatal().Err(err)
 	}
 
-	connection := fmt.Sprintf("%s/%s", rdbsConnection, database)
+	connection := fmt.Sprintf("%s/%s", *rdbsConnection, database)
 
 	return sqlx.MustOpen("mysql", connection)
 }
