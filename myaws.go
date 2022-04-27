@@ -27,6 +27,17 @@ func AWSConnect(r string, proj string) (*session.Session, error) {
 	})
 }
 
+func AWSMustConnect(r string, proj string) *session.Session {
+	awssess, err := session.NewSessionWithOptions(session.Options{
+		Config:  aws.Config{Region: aws.String(r)},
+		Profile: proj,
+	})
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+	return awssess
+}
+
 func AWSAccount(awssess *session.Session) (*string, *string, error) {
 	svc := sts.New(session.New())
 	input := &sts.GetCallerIdentityInput{}
@@ -117,7 +128,14 @@ func DBMustConnect(awssess *session.Session, credSecret string) *sqlx.DB {
 		log.Fatal().Err(err)
 	}
 
-	return sqlx.MustOpen("mysql", *rdbsConnection)
+	db := sqlx.MustOpen("mysql", *rdbsConnection)
+
+	_, err = db.Exec("SET NAMES utf8mb4 COLLATE utf8mb4_general_ci")
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
+	return db
 }
 
 // try to connect to DDB
