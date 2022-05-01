@@ -51,8 +51,8 @@ func AWSAccount(awssess *session.Session) (*string, *string, error) {
 	return &region, result.Account, nil
 }
 
-// try to get value of key from aws secret
-func AWSGetSecretKV(awssess *session.Session, secret string, key string) (*string, error) {
+// try to get value of aws secret
+func AWSGetSecret(awssess *session.Session, secret string, key string) (map[string]string, error) {
 	// get service into secrets manager
 	svc := secretsmanager.New(awssess)
 
@@ -63,20 +63,45 @@ func AWSGetSecretKV(awssess *session.Session, secret string, key string) (*strin
 
 	result, err := svc.GetSecretValue(input)
 	if err != nil {
-		log.Fatal().Err(err)
+		return map[string]string{}, err
 	}
 
 	var keyvalues map[string]string
 	err = json.Unmarshal([]byte(*result.SecretString), &keyvalues)
 	if err != nil {
-		log.Fatal().Err(err)
+		return map[string]string{}, err
+	}
+	return keyvalues, nil
+}
+
+// try to get value of key from aws secret
+func AWSGetSecretKV(awssess *session.Session, secret string, key string) (*string, error) {
+	// get service into secrets manager
+	svc := secretsmanager.New(awssess)
+
+	// go get the secret we need
+	input := &secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(secret),
+	}
+
+	empty := ""
+
+	result, err := svc.GetSecretValue(input)
+	if err != nil {
+		return &empty, err
+	}
+
+	var keyvalues map[string]string
+	err = json.Unmarshal([]byte(*result.SecretString), &keyvalues)
+	if err != nil {
+		return &empty, err
 	}
 	for thiskey, thisvalue := range keyvalues {
 		if thiskey == key {
 			return &thisvalue, nil
 		}
 	}
-	return nil, errors.New(fmt.Sprintf("Key %s not found in secret %s", key, secret))
+	return &empty, errors.New(fmt.Sprintf("Key %s not found in secret %s", key, secret))
 }
 
 func AWSGetSecretValue(awssess *session.Session, secret string) (*string, error) {
@@ -88,9 +113,11 @@ func AWSGetSecretValue(awssess *session.Session, secret string) (*string, error)
 		SecretId: aws.String(secret),
 	}
 
+	empty := ""
+
 	result, err := svc.GetSecretValue(input)
 	if err != nil {
-		log.Fatal().Err(err)
+		return &empty, err
 	}
 
 	var decodedBinarySecret string
@@ -101,7 +128,7 @@ func AWSGetSecretValue(awssess *session.Session, secret string) (*string, error)
 		len, err := base64.StdEncoding.Decode(decodedBinarySecretBytes, result.SecretBinary)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed Base64 Decode")
-			return nil, err
+			return &empty, err
 		}
 		decodedBinarySecret = string(decodedBinarySecretBytes[:len])
 	}
