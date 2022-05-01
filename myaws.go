@@ -52,7 +52,7 @@ func AWSAccount(awssess *session.Session) (*string, *string, error) {
 }
 
 // try to get value of aws secret
-func AWSGetSecret(awssess *session.Session, secret string, key string) (map[string]string, error) {
+func AWSGetSecret(awssess *session.Session, secret string) (map[string]string, error) {
 	// get service into secrets manager
 	svc := secretsmanager.New(awssess)
 
